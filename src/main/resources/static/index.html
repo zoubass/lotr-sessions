@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fartmeter</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        button { -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1a0a00 0%, #2d1f0e 50%, #1a2e0a 100%);
+            color: #e8d5b7;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 3rem;
+            color: #c8a96e;
+            text-shadow: 0 0 20px rgba(200, 169, 110, 0.3);
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #8a7a5a;
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            color: #a08850;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        /* Person Selection */
+        .person-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+
+        .person-btn {
+            padding: 16px 8px;
+            border: 2px solid #4a3a20;
+            border-radius: 12px;
+            background: #2a1f10;
+            color: #c8a96e;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        @media (hover: hover) {
+            .person-btn:hover { background: #3a2a18; border-color: #6a5a30; }
+        }
+
+        .person-btn.selected {
+            background: #4a3510;
+            border-color: #c8a96e;
+            box-shadow: 0 0 15px rgba(200, 169, 110, 0.3);
+        }
+
+        /* Rating Buttons */
+        .rating-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 32px;
+        }
+
+        .rating-btn {
+            padding: 14px 6px;
+            border: 2px solid #3a4a20;
+            border-radius: 12px;
+            background: #1a2a10;
+            color: #a0c060;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        @media (hover: hover) {
+            .rating-btn:hover { background: #2a3a18; border-color: #6a8a30; transform: scale(1.05); }
+        }
+
+        .rating-btn:active {
+            transform: scale(0.95);
+        }
+
+        .rating-btn .number {
+            display: block;
+            font-size: 1.6rem;
+            margin-bottom: 4px;
+        }
+
+        .rating-btn .label {
+            display: block;
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
+
+        .rating-btn.selected {
+            background: #3a5a10;
+            border-color: #a0c060;
+            box-shadow: 0 0 15px rgba(160, 192, 96, 0.3);
+        }
+
+        .rating-btn.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .add-btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #3a4a20;
+            border-radius: 12px;
+            background: #2a3a10;
+            color: #a0c060;
+            font-size: 1.15rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 32px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        @media (hover: hover) {
+            .add-btn:hover:not(:disabled) { background: #3a5a10; border-color: #a0c060; transform: scale(1.02); }
+        }
+
+        .add-btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        .add-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: #221a0a;
+            border: 1px solid #3a2a18;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .stat-card .name {
+            font-weight: 700;
+            color: #c8a96e;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .detail {
+            color: #9a8a6a;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .detail span {
+            color: #d0b880;
+            font-weight: 600;
+        }
+
+        .avg-bar-bg {
+            height: 8px;
+            background: #1a1208;
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .avg-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #6a8a30, #c8a96e);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* Recent Feed */
+        .recent-list {
+            list-style: none;
+        }
+
+        .recent-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: #221a0a;
+            border: 1px solid #2a2010;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+
+        .recent-item .who {
+            font-weight: 600;
+            color: #c8a96e;
+            min-width: 70px;
+        }
+
+        .recent-item .stars {
+            color: #c8a96e;
+            letter-spacing: 2px;
+        }
+
+        .recent-item .time {
+            color: #6a5a3a;
+            font-size: 0.78rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #5a4a30;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #4a3510;
+            color: #c8a96e;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: transform 0.3s ease;
+            z-index: 100;
+            border: 1px solid #6a5a30;
+        }
+
+        .notification.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        @media (max-width: 500px) {
+            body { padding: 12px; }
+            h1 { font-size: 2.2rem; }
+            .subtitle { font-size: 0.85rem; margin-bottom: 22px; }
+            .section-title { font-size: 0.95rem; letter-spacing: 1px; }
+            .person-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 20px; }
+            .person-btn { padding: 14px 8px; font-size: 1rem; min-height: 48px; }
+            .rating-grid { grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 16px; }
+            .rating-btn { padding: 12px 4px; min-height: 48px; }
+            .rating-btn .number { font-size: 1.3rem; }
+            .rating-btn .label { font-size: 0.6rem; }
+            .add-btn { padding: 14px; font-size: 1rem; margin-bottom: 24px; min-height: 48px; }
+            .stats-grid { grid-template-columns: 1fr; gap: 8px; margin-bottom: 24px; }
+            .stat-card { padding: 12px; }
+            .recent-item { padding: 8px 10px; font-size: 0.82rem; }
+            .recent-item .who { min-width: 58px; }
+            .notification { font-size: 0.9rem; padding: 10px 18px; }
+        }
+
+        /* Admin Panel */
+        .admin-panel {
+            display: none;
+            background: #2a0a0a;
+            border: 2px solid #6a2020;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 28px;
+        }
+
+        .admin-panel.visible { display: block; }
+
+        .admin-panel .section-title { color: #c06040; }
+
+        .admin-btn {
+            padding: 12px 20px;
+            border: 2px solid #5a2020;
+            border-radius: 10px;
+            background: #3a1010;
+            color: #e08060;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-right: 8px;
+            margin-top: 8px;
+        }
+
+        @media (hover: hover) {
+            .admin-btn:hover { background: #4a1818; border-color: #8a3030; }
+        }
+
+        .admin-btn.danger {
+            border-color: #7a2020;
+            color: #ff6050;
+        }
+
+        @media (max-width: 360px) {
+            h1 { font-size: 1.8rem; }
+            .rating-grid { grid-template-columns: repeat(5, 1fr); gap: 4px; }
+            .rating-btn { padding: 10px 2px; }
+            .rating-btn .number { font-size: 1.1rem; }
+            .rating-btn .label { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="title" style="cursor: default; user-select: none;">Fartmeter</h1>
+        <p class="subtitle">Rate the rip. Track the stats. Fear the thunder.</p>
+
+        <div class="admin-panel" id="adminPanel">
+            <div class="section-title">Developer Options</div>
+            <button class="admin-btn" onclick="deleteLast()">Delete Last Record</button>
+            <button class="admin-btn danger" onclick="deleteAllRecords()">Delete All Records</button>
+        </div>
+
+        <div class="section-title">Who farted?</div>
+        <div class="person-grid" id="personGrid"></div>
+
+        <div class="section-title">Rate the fart</div>
+        <div class="rating-grid" id="ratingGrid"></div>
+
+        <button class="add-btn" id="addBtn" disabled onclick="submitFart()">Record Fart</button>
+
+        <div class="section-title">Statistics</div>
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="section-title">Recent Farts</div>
+        <ul class="recent-list" id="recentList"></ul>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        const PEOPLE = ['Misak', 'Ondra', 'Pitek', 'Zoubas'];
+        const RATING_LABELS = ['', 'Tiny puff', 'Sneaky one', 'Solid rip', 'Room clearer', 'Thunderclap'];
+        let selectedPerson = null;
+        let selectedRating = null;
+
+        // --- Fart Sound Synthesis ---
+        const FART_PARAMS = {
+            1: { duration: 0.3, baseFreq: 120, vibratoDepth: 5,  vibratoSpeed: 25, volume: 0.3, filterCutoff: 300 },
+            2: { duration: 0.5, baseFreq: 100, vibratoDepth: 10, vibratoSpeed: 20, volume: 0.4, filterCutoff: 400 },
+            3: { duration: 0.8, baseFreq: 80,  vibratoDepth: 20, vibratoSpeed: 15, volume: 0.5, filterCutoff: 500 },
+            4: { duration: 1.2, baseFreq: 60,  vibratoDepth: 35, vibratoSpeed: 12, volume: 0.7, filterCutoff: 600 },
+            5: { duration: 2.0, baseFreq: 45,  vibratoDepth: 50, vibratoSpeed: 8,  volume: 1.0, filterCutoff: 800 }
+        };
+
+        function playFartSound(rating) {
+            const p = FART_PARAMS[rating];
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const now = ctx.currentTime;
+
+            // Main oscillator
+            const osc = ctx.createOscillator();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(p.baseFreq, now);
+            osc.frequency.linearRampToValueAtTime(p.baseFreq * 0.7, now + p.duration);
+
+            // Vibrato LFO
+            const lfo = ctx.createOscillator();
+            lfo.frequency.value = p.vibratoSpeed;
+            const lfoGain = ctx.createGain();
+            lfoGain.gain.value = p.vibratoDepth;
+            lfo.connect(lfoGain);
+            lfoGain.connect(osc.frequency);
+
+            // Lowpass filter
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = p.filterCutoff;
+            filter.Q.value = 2;
+
+            // Master gain envelope
+            const masterGain = ctx.createGain();
+            masterGain.gain.setValueAtTime(0, now);
+            masterGain.gain.linearRampToValueAtTime(p.volume, now + 0.04);
+            masterGain.gain.setValueAtTime(p.volume * 0.9, now + p.duration * 0.6);
+            masterGain.gain.linearRampToValueAtTime(0, now + p.duration);
+
+            // Noise for "air" quality
+            const bufferSize = Math.ceil(ctx.sampleRate * p.duration);
+            const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const data = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * 0.3;
+            }
+            const noise = ctx.createBufferSource();
+            noise.buffer = noiseBuffer;
+
+            const noiseFilter = ctx.createBiquadFilter();
+            noiseFilter.type = 'lowpass';
+            noiseFilter.frequency.value = p.filterCutoff * 0.8;
+
+            const noiseGain = ctx.createGain();
+            noiseGain.gain.setValueAtTime(0, now);
+            noiseGain.gain.linearRampToValueAtTime(p.volume * 0.4, now + 0.04);
+            noiseGain.gain.linearRampToValueAtTime(0, now + p.duration);
+
+            // Connect oscillator path
+            osc.connect(filter);
+            filter.connect(masterGain);
+            masterGain.connect(ctx.destination);
+
+            // Connect noise path
+            noise.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(ctx.destination);
+
+            // Start and stop
+            osc.start(now);
+            lfo.start(now);
+            noise.start(now);
+            osc.stop(now + p.duration);
+            lfo.stop(now + p.duration);
+            noise.stop(now + p.duration);
+
+            setTimeout(() => ctx.close(), p.duration * 1000 + 200);
+        }
+
+        // --- UI Rendering ---
+        function renderPersonButtons() {
+            const grid = document.getElementById('personGrid');
+            grid.innerHTML = PEOPLE.map(name =>
+                `<button class="person-btn ${selectedPerson === name ? 'selected' : ''}"
+                         onclick="selectPerson('${name}')">${name}</button>`
+            ).join('');
+        }
+
+        function renderRatingButtons() {
+            const grid = document.getElementById('ratingGrid');
+            grid.innerHTML = [1, 2, 3, 4, 5].map(r =>
+                `<button class="rating-btn ${selectedRating === r ? 'selected' : ''} ${!selectedPerson ? 'disabled' : ''}"
+                         onclick="selectRating(${r})" ${!selectedPerson ? 'disabled' : ''}>
+                    <span class="number">${r}</span>
+                    <span class="label">${RATING_LABELS[r]}</span>
+                </button>`
+            ).join('');
+        }
+
+        function renderAddButton() {
+            const btn = document.getElementById('addBtn');
+            btn.disabled = !(selectedPerson && selectedRating);
+        }
+
+        function renderStats(stats) {
+            const grid = document.getElementById('statsGrid');
+            if (!stats || stats.length === 0) {
+                grid.innerHTML = '<div class="empty-state">No farts recorded yet</div>';
+                return;
+            }
+            grid.innerHTML = stats.map(s =>
+                `<div class="stat-card">
+                    <div class="name">${s.person}</div>
+                    <div class="detail">Total: <span>${s.totalFarts}</span></div>
+                    <div class="detail">Avg rating: <span>${s.averageRating.toFixed(1)}</span></div>
+                    <div class="avg-bar-bg">
+                        <div class="avg-bar" style="width: ${(s.averageRating / 5) * 100}%"></div>
+                    </div>
+                </div>`
+            ).join('');
+        }
+
+        function timeAgo(timestamp) {
+            const now = new Date();
+            const then = new Date(timestamp);
+            const seconds = Math.floor((now - then) / 1000);
+            if (seconds < 10) return 'just now';
+            if (seconds < 60) return seconds + 's ago';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return minutes + 'm ago';
+            const hours = Math.floor(minutes / 60);
+            return hours + 'h ago';
+        }
+
+        function renderRecent(farts) {
+            const list = document.getElementById('recentList');
+            if (!farts || farts.length === 0) {
+                list.innerHTML = '<li class="empty-state">No farts yet. Someone break the ice!</li>';
+                return;
+            }
+            list.innerHTML = farts.map(f =>
+                `<li class="recent-item">
+                    <span class="who">${f.person}</span>
+                    <span class="stars">${'\u2B50'.repeat(f.rating)}</span>
+                    <span class="time">${timeAgo(f.timestamp)}</span>
+                </li>`
+            ).join('');
+        }
+
+        // --- Actions ---
+        function selectPerson(name) {
+            selectedPerson = name;
+            renderPersonButtons();
+            renderRatingButtons();
+            renderAddButton();
+        }
+
+        function selectRating(rating) {
+            selectedRating = rating;
+            playFartSound(rating);
+            renderRatingButtons();
+            renderAddButton();
+        }
+
+        async function submitFart() {
+            if (!selectedPerson || !selectedRating) return;
+
+            try {
+                const resp = await fetch('/api/farts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ person: selectedPerson, rating: selectedRating })
+                });
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    showNotification(err.error || 'Something went wrong');
+                    return;
+                }
+                showNotification(`${selectedPerson} ripped a ${RATING_LABELS[selectedRating].toLowerCase()}!`);
+                selectedRating = null;
+                renderRatingButtons();
+                renderAddButton();
+                await refreshData();
+            } catch (e) {
+                showNotification('Failed to record fart');
+            }
+        }
+
+        async function refreshData() {
+            try {
+                const [statsResp, recentResp] = await Promise.all([
+                    fetch('/api/farts/stats'),
+                    fetch('/api/farts/recent')
+                ]);
+                const statsData = await statsResp.json();
+                const recentData = await recentResp.json();
+                renderStats(statsData.stats);
+                renderRecent(recentData);
+            } catch (e) {
+                console.error('Failed to load data', e);
+            }
+        }
+
+        function showNotification(msg) {
+            const el = document.getElementById('notification');
+            el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 2000);
+        }
+
+        // --- Secret Admin ---
+        let titleClicks = 0;
+        let titleClickTimer = null;
+        document.getElementById('title').addEventListener('click', () => {
+            titleClicks++;
+            clearTimeout(titleClickTimer);
+            titleClickTimer = setTimeout(() => { titleClicks = 0; }, 3000);
+            if (titleClicks >= 10) {
+                const panel = document.getElementById('adminPanel');
+                panel.classList.toggle('visible');
+                titleClicks = 0;
+            }
+        });
+
+        async function deleteLast() {
+            try {
+                const resp = await fetch('/api/farts/last', { method: 'DELETE' });
+                if (resp.ok) {
+                    showNotification('Last record deleted');
+                    await refreshData();
+                } else {
+                    showNotification('No records to delete');
+                }
+            } catch (e) {
+                showNotification('Failed to delete');
+            }
+        }
+
+        async function deleteAllRecords() {
+            if (!confirm('Delete ALL fart records? This cannot be undone.')) return;
+            try {
+                const resp = await fetch('/api/farts', { method: 'DELETE' });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    showNotification(`Deleted ${data.deleted} records`);
+                    await refreshData();
+                }
+            } catch (e) {
+                showNotification('Failed to delete');
+            }
+        }
+
+        // --- Init ---
+        renderPersonButtons();
+        renderRatingButtons();
+        refreshData();
+    </script>
+</body>
+</html>
